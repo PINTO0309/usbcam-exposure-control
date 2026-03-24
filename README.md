@@ -84,6 +84,35 @@ Chromium (Electron) の MediaStream API を使用して露出を制御する。
 4. 「適用」ボタンを押す
 5. プレビュー映像の明るさが固定されれば制御成功
 
+**実装サンプル**:
+
+```typescript
+async function disableAutoExposure(videoElement: HTMLVideoElement) {
+  const stream = await navigator.mediaDevices.getUserMedia({
+    video: { width: { ideal: 1920 }, height: { ideal: 1080 } }
+  });
+
+  videoElement.srcObject = stream;
+  const track = stream.getVideoTracks()[0];
+  const capabilities = track.getCapabilities() as any;
+
+  // exposureMode の対応確認
+  if (capabilities.exposureMode && capabilities.exposureMode.includes('manual')) {
+    // 自動露出を無効化（マニュアルモードに設定）
+    await track.applyConstraints({
+      advanced: [{ exposureMode: 'manual' } as any]
+    });
+
+    // 露出時間を固定値で指定する場合
+    await track.applyConstraints({
+      advanced: [{ exposureMode: 'manual', exposureTime: 166 } as any]
+    });
+  }
+}
+```
+
+> **注意**: `exposureMode` と `exposureTime` は TypeScript の標準型定義に含まれていないため、`as any` でキャストする必要がある。
+
 ### Pattern 2: v4l2-ctl (Linux V4L2)
 
 `v4l2-ctl` コマンドを `child_process.exec` 経由で実行して露出を制御する。
