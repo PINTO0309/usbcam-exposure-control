@@ -4,7 +4,7 @@ import * as path from 'path';
 function createWindow() {
   const win = new BrowserWindow({
     width: 960,
-    height: 1235,
+    height: 1090,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
