@@ -1,4 +1,4 @@
-# usbcam-whitebalance
+# usbcam-exposure-control
 
 USB カメラの自動露出（Auto Exposure）をプログラムから制御できるかを検証するための Electron + TypeScript アプリケーション。
 
