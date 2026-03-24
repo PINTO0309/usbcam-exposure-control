@@ -14,14 +14,14 @@ USB カメラの自動露出（Auto Exposure）をプログラムから制御で
 - **Linux** 環境（Pattern 2 は V4L2 を使用するため Linux 専用）
 - **v4l2-utils** がインストールされていること（Pattern 2 で使用）
 
-```bash
-# Node.js バージョン確認・切替
-node --version
-nvm use 20  # v12 など古い場合
+    ```bash
+    # Node.js バージョン確認・切替
+    node --version
+    nvm use 20  # v12 など古い場合
 
-# v4l2-utils のインストール（Ubuntu / Debian）
-sudo apt install v4l-utils
-```
+    # v4l2-utils のインストール（Ubuntu / Debian）
+    sudo apt install v4l-utils
+    ```
 
 ## セットアップ
 
