@@ -4,6 +4,8 @@ USB カメラの自動露出（Auto Exposure）をプログラムから制御で
 
 Web API (`MediaStreamTrack.applyConstraints`) を使用して自動露出の無効化と露出時間の手動設定を GUI 上で検証できる。
 
+https://github.com/user-attachments/assets/2493d641-39be-487e-8f5c-0dde0e259254
+
 ## 前提条件
 
 - **Node.js 18 以上**（推奨: v20）
