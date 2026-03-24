@@ -1,12 +1,12 @@
 import { contextBridge, ipcRenderer } from 'electron';
 
-contextBridge.exposeInMainWorld('uvccApi', {
-  getControls: (): Promise<{ success: boolean; data?: string; error?: string }> =>
-    ipcRenderer.invoke('uvcc:get-controls'),
-  setAutoWB: (enabled: boolean): Promise<{ success: boolean; data?: string; error?: string }> =>
-    ipcRenderer.invoke('uvcc:set-auto-wb', enabled),
-  setTemperature: (temp: number): Promise<{ success: boolean; data?: string; error?: string }> =>
-    ipcRenderer.invoke('uvcc:set-temperature', temp),
-  getDevices: (): Promise<{ success: boolean; data?: string; error?: string }> =>
-    ipcRenderer.invoke('uvcc:devices'),
+contextBridge.exposeInMainWorld('v4l2Api', {
+  getExposure: (): Promise<{ success: boolean; data?: string; error?: string }> =>
+    ipcRenderer.invoke('v4l2:get-exposure'),
+  setAutoExposure: (mode: number): Promise<{ success: boolean; data?: string; error?: string }> =>
+    ipcRenderer.invoke('v4l2:set-auto-exposure', mode),
+  setExposureTime: (time: number): Promise<{ success: boolean; data?: string; error?: string }> =>
+    ipcRenderer.invoke('v4l2:set-exposure-time', time),
+  listDevices: (): Promise<{ success: boolean; data?: string; error?: string }> =>
+    ipcRenderer.invoke('v4l2:list-devices'),
 });

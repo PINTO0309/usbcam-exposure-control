@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; media-src 'self' blob:; script-src 'self'">
-  <title>USB Camera White Balance Tester</title>
+  <title>USB Camera Exposure Control Tester</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Segoe UI', sans-serif; background: #1e1e1e; color: #d4d4d4; padding: 16px; }
@@ -33,7 +33,7 @@
 
     label { font-size: 13px; display: flex; align-items: center; gap: 6px; }
     input[type="range"] { width: 200px; }
-    .temp-value { font-size: 13px; color: #dcdcaa; min-width: 50px; }
+    .exp-value { font-size: 13px; color: #dcdcaa; min-width: 50px; }
 
     .status { font-size: 12px; margin-top: 6px; color: #608b4e; }
     .status.error { color: #f44747; }
@@ -50,7 +50,7 @@
   </style>
 </head>
 <body>
-  <h1>USB Camera White Balance Tester</h1>
+  <h1>USB Camera Exposure Control Tester</h1>
 
   <div class="video-container">
     <video id="video" autoplay muted playsinline></video>
@@ -66,36 +66,36 @@
   <div class="section">
     <h2>Pattern 1: Web API (MediaStream)</h2>
     <div class="controls">
-      <button id="webapi-auto">Auto WB</button>
-      <button id="webapi-manual">Manual WB</button>
+      <button id="webapi-auto">Auto Exposure</button>
+      <button id="webapi-manual">Manual Exposure</button>
       <label>
-        色温度:
-        <input type="range" id="webapi-temp" min="2800" max="6500" step="100" value="4500">
-        <span class="temp-value" id="webapi-temp-value">4500K</span>
+        露出時間:
+        <input type="range" id="webapi-exp" min="3" max="2047" step="1" value="166">
+        <span class="exp-value" id="webapi-exp-value">166</span>
       </label>
-      <button id="webapi-apply-temp">適用</button>
+      <button id="webapi-apply-exp">適用</button>
     </div>
     <div id="webapi-status" class="status"></div>
   </div>
 
-  <!-- Pattern 2: uvcc CLI -->
+  <!-- Pattern 2: v4l2-ctl -->
   <div class="section">
-    <h2>Pattern 2: uvcc CLI (child_process)</h2>
+    <h2>Pattern 2: v4l2-ctl (Linux V4L2)</h2>
     <div class="controls">
-      <button id="uvcc-auto">Auto WB</button>
-      <button id="uvcc-manual">Manual WB</button>
+      <button id="v4l2-auto">Auto Exposure (3)</button>
+      <button id="v4l2-manual">Manual Exposure (1)</button>
       <label>
-        色温度:
-        <input type="range" id="uvcc-temp" min="2800" max="6500" step="100" value="4500">
-        <span class="temp-value" id="uvcc-temp-value">4500K</span>
+        露出時間:
+        <input type="range" id="v4l2-exp" min="3" max="2047" step="1" value="166">
+        <span class="exp-value" id="v4l2-exp-value">166</span>
       </label>
-      <button id="uvcc-apply-temp">適用</button>
+      <button id="v4l2-apply-exp">適用</button>
     </div>
     <div class="controls" style="margin-top: 4px;">
-      <button id="uvcc-get-controls">現在の設定を取得</button>
-      <button id="uvcc-devices">デバイス一覧</button>
+      <button id="v4l2-get-exposure">現在の露出設定を取得</button>
+      <button id="v4l2-list-devices">デバイス一覧</button>
     </div>
-    <div id="uvcc-status" class="status"></div>
+    <div id="v4l2-status" class="status"></div>
   </div>
 
   <!-- Log -->

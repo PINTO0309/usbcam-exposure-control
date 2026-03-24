@@ -1,16 +1,3 @@
-// uvcc API (preload で公開)
-export {};
-declare global {
-  interface Window {
-    uvccApi: {
-      getControls: () => Promise<{ success: boolean; data?: string; error?: string }>;
-      setAutoWB: (enabled: boolean) => Promise<{ success: boolean; data?: string; error?: string }>;
-      setTemperature: (temp: number) => Promise<{ success: boolean; data?: string; error?: string }>;
-      getDevices: () => Promise<{ success: boolean; data?: string; error?: string }>;
-    };
-  }
-}
-
 // ---- ログ ----
 function addLog(message: string, type: 'info' | 'success' | 'error' = 'info') {
   const logDiv = document.getElementById('log')!;
@@ -34,25 +21,13 @@ const capabilitiesDiv = document.getElementById('capabilities')!;
 // Pattern 1 要素
 const webapiAutoBtn = document.getElementById('webapi-auto') as HTMLButtonElement;
 const webapiManualBtn = document.getElementById('webapi-manual') as HTMLButtonElement;
-const webapiTempSlider = document.getElementById('webapi-temp') as HTMLInputElement;
-const webapiTempValue = document.getElementById('webapi-temp-value')!;
-const webapiApplyTempBtn = document.getElementById('webapi-apply-temp') as HTMLButtonElement;
-
-// Pattern 2 要素
-const uvccAutoBtn = document.getElementById('uvcc-auto') as HTMLButtonElement;
-const uvccManualBtn = document.getElementById('uvcc-manual') as HTMLButtonElement;
-const uvccTempSlider = document.getElementById('uvcc-temp') as HTMLInputElement;
-const uvccTempValue = document.getElementById('uvcc-temp-value')!;
-const uvccApplyTempBtn = document.getElementById('uvcc-apply-temp') as HTMLButtonElement;
-const uvccGetControlsBtn = document.getElementById('uvcc-get-controls') as HTMLButtonElement;
-const uvccDevicesBtn = document.getElementById('uvcc-devices') as HTMLButtonElement;
+const webapiExpSlider = document.getElementById('webapi-exp') as HTMLInputElement;
+const webapiExpValue = document.getElementById('webapi-exp-value')!;
+const webapiApplyExpBtn = document.getElementById('webapi-apply-exp') as HTMLButtonElement;
 
 // ---- スライダーの値表示更新 ----
-webapiTempSlider.addEventListener('input', () => {
-  webapiTempValue.textContent = `${webapiTempSlider.value}K`;
-});
-uvccTempSlider.addEventListener('input', () => {
-  uvccTempValue.textContent = `${uvccTempSlider.value}K`;
+webapiExpSlider.addEventListener('input', () => {
+  webapiExpValue.textContent = webapiExpSlider.value;
 });
 
 // ---- カメラトラック (Pattern 1 で使用) ----
@@ -73,8 +48,6 @@ async function initCamera() {
     currentTrack = stream.getVideoTracks()[0];
 
     addLog(`カメラ接続: ${currentTrack.label}`, 'success');
-
-    // Capabilities を表示
     displayCapabilities();
   } catch (error: any) {
     addLog(`カメラ初期化エラー: ${error.message}`, 'error');
@@ -92,27 +65,27 @@ function displayCapabilities() {
   html += `<div>デバイス: <span>${currentTrack.label}</span></div>`;
   html += `<div>解像度: <span>${settings.width}x${settings.height}</span></div>`;
 
-  if (capabilities.whiteBalanceMode) {
-    html += `<div>whiteBalanceMode 対応: <span style="color:#608b4e">YES</span> (${capabilities.whiteBalanceMode.join(', ')})</div>`;
-    html += `<div>現在のモード: <span>${settings.whiteBalanceMode || '不明'}</span></div>`;
+  if (capabilities.exposureMode) {
+    html += `<div>exposureMode 対応: <span style="color:#608b4e">YES</span> (${capabilities.exposureMode.join(', ')})</div>`;
+    const modeLabel = settings.exposureMode === 'continuous' ? 'Auto Exposure' : settings.exposureMode === 'manual' ? 'Manual Exposure' : settings.exposureMode || '不明';
+    html += `<div>現在のモード: <span>${modeLabel}</span></div>`;
   } else {
-    html += `<div>whiteBalanceMode 対応: <span style="color:#f44747">NO (Web APIからの制御不可)</span></div>`;
+    html += `<div>exposureMode 対応: <span style="color:#f44747">NO (Web APIからの制御不可)</span></div>`;
   }
 
-  if (capabilities.colorTemperature) {
-    html += `<div>色温度範囲: <span>${capabilities.colorTemperature.min}K - ${capabilities.colorTemperature.max}K (step: ${capabilities.colorTemperature.step})</span></div>`;
-    html += `<div>現在の色温度: <span>${settings.colorTemperature || '不明'}K</span></div>`;
+  if (capabilities.exposureTime) {
+    html += `<div>露出時間範囲: <span>${capabilities.exposureTime.min} - ${capabilities.exposureTime.max} (step: ${capabilities.exposureTime.step})</span></div>`;
+    html += `<div>現在の露出時間: <span>${settings.exposureTime || '不明'}</span></div>`;
 
-    // スライダー範囲を実際のケーパビリティに合わせる
-    webapiTempSlider.min = String(capabilities.colorTemperature.min);
-    webapiTempSlider.max = String(capabilities.colorTemperature.max);
-    webapiTempSlider.step = String(capabilities.colorTemperature.step);
-    if (settings.colorTemperature) {
-      webapiTempSlider.value = String(settings.colorTemperature);
-      webapiTempValue.textContent = `${settings.colorTemperature}K`;
+    webapiExpSlider.min = String(capabilities.exposureTime.min);
+    webapiExpSlider.max = String(capabilities.exposureTime.max);
+    webapiExpSlider.step = String(capabilities.exposureTime.step);
+    if (settings.exposureTime) {
+      webapiExpSlider.value = String(settings.exposureTime);
+      webapiExpValue.textContent = String(settings.exposureTime);
     }
   } else {
-    html += `<div>colorTemperature 対応: <span style="color:#f44747">NO</span></div>`;
+    html += `<div>exposureTime 対応: <span style="color:#f44747">NO</span></div>`;
   }
 
   capabilitiesDiv.innerHTML = html;
@@ -123,16 +96,16 @@ webapiAutoBtn.addEventListener('click', async () => {
   if (!currentTrack) return;
   try {
     await currentTrack.applyConstraints({
-      advanced: [{ whiteBalanceMode: 'continuous' } as any],
+      advanced: [{ exposureMode: 'continuous' } as any],
     });
     webapiAutoBtn.classList.add('active');
     webapiManualBtn.classList.remove('active');
-    setStatus('webapi-status', 'Auto WB に設定しました。');
-    addLog('[Web API] whiteBalanceMode → continuous', 'success');
+    setStatus('webapi-status', 'Auto Exposure に設定しました。');
+    addLog('[Web API] exposureMode → continuous', 'success');
     displayCapabilities();
   } catch (error: any) {
     setStatus('webapi-status', `エラー: ${error.message}`, true);
-    addLog(`[Web API] Auto WB 設定エラー: ${error.message}`, 'error');
+    addLog(`[Web API] Auto Exposure 設定エラー: ${error.message}`, 'error');
   }
 });
 
@@ -140,115 +113,128 @@ webapiManualBtn.addEventListener('click', async () => {
   if (!currentTrack) return;
   try {
     await currentTrack.applyConstraints({
-      advanced: [{ whiteBalanceMode: 'manual' } as any],
+      advanced: [{ exposureMode: 'manual' } as any],
     });
     webapiManualBtn.classList.add('active');
     webapiAutoBtn.classList.remove('active');
-    setStatus('webapi-status', 'Manual WB に設定しました。');
-    addLog('[Web API] whiteBalanceMode → manual', 'success');
+    setStatus('webapi-status', 'Manual Exposure に設定しました。');
+    addLog('[Web API] exposureMode → manual', 'success');
     displayCapabilities();
   } catch (error: any) {
     setStatus('webapi-status', `エラー: ${error.message}`, true);
-    addLog(`[Web API] Manual WB 設定エラー: ${error.message}`, 'error');
+    addLog(`[Web API] Manual Exposure 設定エラー: ${error.message}`, 'error');
   }
 });
 
-webapiApplyTempBtn.addEventListener('click', async () => {
+webapiApplyExpBtn.addEventListener('click', async () => {
   if (!currentTrack) return;
-  const temp = parseInt(webapiTempSlider.value, 10);
+  const time = parseInt(webapiExpSlider.value, 10);
   try {
     await currentTrack.applyConstraints({
-      advanced: [{ whiteBalanceMode: 'manual', colorTemperature: temp } as any],
+      advanced: [{ exposureMode: 'manual', exposureTime: time } as any],
     });
     webapiManualBtn.classList.add('active');
     webapiAutoBtn.classList.remove('active');
-    setStatus('webapi-status', `色温度を ${temp}K に設定しました。`);
-    addLog(`[Web API] colorTemperature → ${temp}K`, 'success');
+    setStatus('webapi-status', `露出時間を ${time} に設定しました。`);
+    addLog(`[Web API] exposureTime → ${time}`, 'success');
     displayCapabilities();
   } catch (error: any) {
     setStatus('webapi-status', `エラー: ${error.message}`, true);
-    addLog(`[Web API] 色温度設定エラー: ${error.message}`, 'error');
+    addLog(`[Web API] 露出時間設定エラー: ${error.message}`, 'error');
   }
 });
 
-// ---- Pattern 2: uvcc CLI 制御 ----
-uvccAutoBtn.addEventListener('click', async () => {
+// ---- Pattern 4: v4l2-ctl 制御 ----
+const v4l2AutoBtn = document.getElementById('v4l2-auto') as HTMLButtonElement;
+const v4l2ManualBtn = document.getElementById('v4l2-manual') as HTMLButtonElement;
+const v4l2ExpSlider = document.getElementById('v4l2-exp') as HTMLInputElement;
+const v4l2ExpValueEl = document.getElementById('v4l2-exp-value')!;
+const v4l2ApplyExpBtn = document.getElementById('v4l2-apply-exp') as HTMLButtonElement;
+const v4l2GetExposureBtn = document.getElementById('v4l2-get-exposure') as HTMLButtonElement;
+const v4l2ListDevicesBtn = document.getElementById('v4l2-list-devices') as HTMLButtonElement;
+
+v4l2ExpSlider.addEventListener('input', () => {
+  v4l2ExpValueEl.textContent = v4l2ExpSlider.value;
+});
+
+v4l2AutoBtn.addEventListener('click', async () => {
   try {
-    const result = await window.uvccApi.setAutoWB(true);
+    // v4l2 auto_exposure: 3=Aperture Priority Mode(自動), 1=Manual Mode
+    const result = await window.v4l2Api.setAutoExposure(3);
     if (result.success) {
-      uvccAutoBtn.classList.add('active');
-      uvccManualBtn.classList.remove('active');
-      setStatus('uvcc-status', 'Auto WB を有効化しました。');
-      addLog(`[uvcc] auto_white_balance_temperature → 1`, 'success');
+      v4l2AutoBtn.classList.add('active');
+      v4l2ManualBtn.classList.remove('active');
+      setStatus('v4l2-status', 'Auto Exposure (3: Aperture Priority) に設定しました。');
+      addLog('[v4l2] auto_exposure → 3 (Aperture Priority Mode)', 'success');
     } else {
       throw new Error(result.error);
     }
   } catch (error: any) {
-    setStatus('uvcc-status', `エラー: ${error.message}`, true);
-    addLog(`[uvcc] Auto WB エラー: ${error.message}`, 'error');
+    setStatus('v4l2-status', `エラー: ${error.message}`, true);
+    addLog(`[v4l2] Auto Exposure エラー: ${error.message}`, 'error');
   }
 });
 
-uvccManualBtn.addEventListener('click', async () => {
+v4l2ManualBtn.addEventListener('click', async () => {
   try {
-    const result = await window.uvccApi.setAutoWB(false);
+    const result = await window.v4l2Api.setAutoExposure(1);
     if (result.success) {
-      uvccManualBtn.classList.add('active');
-      uvccAutoBtn.classList.remove('active');
-      setStatus('uvcc-status', 'Auto WB を無効化しました。');
-      addLog(`[uvcc] auto_white_balance_temperature → 0`, 'success');
+      v4l2ManualBtn.classList.add('active');
+      v4l2AutoBtn.classList.remove('active');
+      setStatus('v4l2-status', 'Manual Exposure (1: Manual Mode) に設定しました。');
+      addLog('[v4l2] auto_exposure → 1 (Manual Mode)', 'success');
     } else {
       throw new Error(result.error);
     }
   } catch (error: any) {
-    setStatus('uvcc-status', `エラー: ${error.message}`, true);
-    addLog(`[uvcc] Manual WB エラー: ${error.message}`, 'error');
+    setStatus('v4l2-status', `エラー: ${error.message}`, true);
+    addLog(`[v4l2] Manual Exposure エラー: ${error.message}`, 'error');
   }
 });
 
-uvccApplyTempBtn.addEventListener('click', async () => {
-  const temp = parseInt(uvccTempSlider.value, 10);
+v4l2ApplyExpBtn.addEventListener('click', async () => {
+  const time = parseInt(v4l2ExpSlider.value, 10);
   try {
-    const result = await window.uvccApi.setTemperature(temp);
+    const result = await window.v4l2Api.setExposureTime(time);
     if (result.success) {
-      setStatus('uvcc-status', `色温度を ${temp}K に設定しました。`);
-      addLog(`[uvcc] white_balance_temperature → ${temp}`, 'success');
+      setStatus('v4l2-status', `露出時間を ${time} に設定しました。`);
+      addLog(`[v4l2] exposure_time_absolute → ${time}`, 'success');
     } else {
       throw new Error(result.error);
     }
   } catch (error: any) {
-    setStatus('uvcc-status', `エラー: ${error.message}`, true);
-    addLog(`[uvcc] 色温度設定エラー: ${error.message}`, 'error');
+    setStatus('v4l2-status', `エラー: ${error.message}`, true);
+    addLog(`[v4l2] 露出時間設定エラー: ${error.message}`, 'error');
   }
 });
 
-uvccGetControlsBtn.addEventListener('click', async () => {
+v4l2GetExposureBtn.addEventListener('click', async () => {
   try {
-    const result = await window.uvccApi.getControls();
+    const result = await window.v4l2Api.getExposure();
     if (result.success) {
-      setStatus('uvcc-status', '設定を取得しました。');
-      addLog(`[uvcc] 現在の設定:\n${result.data}`, 'info');
+      setStatus('v4l2-status', '露出設定を取得しました。');
+      addLog(`[v4l2] 露出設定:\n${result.data}`, 'info');
     } else {
       throw new Error(result.error);
     }
   } catch (error: any) {
-    setStatus('uvcc-status', `エラー: ${error.message}`, true);
-    addLog(`[uvcc] 設定取得エラー: ${error.message}`, 'error');
+    setStatus('v4l2-status', `エラー: ${error.message}`, true);
+    addLog(`[v4l2] 露出取得エラー: ${error.message}`, 'error');
   }
 });
 
-uvccDevicesBtn.addEventListener('click', async () => {
+v4l2ListDevicesBtn.addEventListener('click', async () => {
   try {
-    const result = await window.uvccApi.getDevices();
+    const result = await window.v4l2Api.listDevices();
     if (result.success) {
-      setStatus('uvcc-status', 'デバイス一覧を取得しました。');
-      addLog(`[uvcc] デバイス一覧:\n${result.data}`, 'info');
+      setStatus('v4l2-status', 'デバイス一覧を取得しました。');
+      addLog(`[v4l2] デバイス一覧:\n${result.data}`, 'info');
     } else {
       throw new Error(result.error);
     }
   } catch (error: any) {
-    setStatus('uvcc-status', `エラー: ${error.message}`, true);
-    addLog(`[uvcc] デバイス取得エラー: ${error.message}`, 'error');
+    setStatus('v4l2-status', `エラー: ${error.message}`, true);
+    addLog(`[v4l2] デバイス取得エラー: ${error.message}`, 'error');
   }
 });
 
